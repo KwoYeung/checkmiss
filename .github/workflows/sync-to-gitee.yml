@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -22,11 +22,11 @@ jobs:
           GITEE_USERNAME: ${{ secrets.GITEE_USERNAME }}
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
-          if [ -z "$GITEE_USERNAME" ] || [ -z "$GITEE_TOKEN" ]; then
-            echo "GITEE_USERNAME or GITEE_TOKEN is not configured."
+          GITEE_USERNAME="${GITEE_USERNAME:-nagoyaaaaa}"
+          if [ -z "$GITEE_TOKEN" ]; then
+            echo "GITEE_TOKEN is not configured."
             exit 1
           fi
           git remote add gitee "https://${GITEE_USERNAME}:${GITEE_TOKEN}@gitee.com/nagoyaaaaa/checkmiss.git"
           git push gitee HEAD:main
           git push gitee --tags
-
