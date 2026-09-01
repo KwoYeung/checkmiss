@@ -71,6 +71,7 @@ jobs:
           if [ -z "$RELEASE_NAME" ] || [ "$RELEASE_NAME" = "null" ]; then
             RELEASE_NAME="$TAG"
           fi
+          TARGET_COMMITISH="$(git rev-list -n 1 "$TAG")"
 
           git remote add gitee "$GITEE_GIT_URL"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -97,7 +98,8 @@ jobs:
               --arg tag_name "$TAG" \
               --arg name "$RELEASE_NAME" \
               --arg body "$RELEASE_BODY" \
-              '{tag_name:$tag_name, name:$name, body:$body, prerelease:false}' \
+              --arg target_commitish "$TARGET_COMMITISH" \
+              '{tag_name:$tag_name, name:$name, body:$body, target_commitish:$target_commitish, prerelease:false}' \
               > create-release.json
 
             HTTP_CODE="$(
