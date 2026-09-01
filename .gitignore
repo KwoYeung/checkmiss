@@ -1,0 +1,16 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Runtime outputs
+outputs/
+*.csv
+*.xlsx
+*.xls
+*.tsv
+*.txt
+
+# Keep source docs if added intentionally
+!README.md
+!LICENSE
+
