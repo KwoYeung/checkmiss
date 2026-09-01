@@ -56,8 +56,10 @@ jobs:
             exit 1
           fi
 
-          GITEE_API="https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}"
-          GITEE_GIT_URL="https://${GITEE_OWNER}:${GITEE_TOKEN}@gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
+          GITEE_REPO_PATH="$(echo "$GITEE_REPO" | tr '[:upper:]' '[:lower:]')"
+          GITEE_API="https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO_PATH}"
+          GITEE_GIT_URL="https://${GITEE_OWNER}:${GITEE_TOKEN}@gitee.com/${GITEE_OWNER}/${GITEE_REPO_PATH}.git"
+          GITEE_AUTH_HEADER="Authorization: Bearer ${GITEE_TOKEN}"
 
           gh release view "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
@@ -80,24 +82,33 @@ jobs:
 
           HTTP_CODE="$(
             curl -sS \
+              -H "$GITEE_AUTH_HEADER" \
+              -H "Accept: application/json" \
               -o gitee-release.json \
               -w "%{http_code}" \
-              "${GITEE_API}/releases/tags/${TAG}?access_token=${GITEE_TOKEN}"
+              "${GITEE_API}/releases/tags/${TAG}"
           )"
 
-          if [ "$HTTP_CODE" = "200" ]; then
+          if [ "$HTTP_CODE" = "200" ] && jq -e '.id // empty' gitee-release.json >/dev/null; then
             GITEE_RELEASE_ID="$(jq -r '.id' gitee-release.json)"
             echo "Gitee release already exists: ${GITEE_RELEASE_ID}"
           else
+            jq -n \
+              --arg tag_name "$TAG" \
+              --arg name "$RELEASE_NAME" \
+              --arg body "$RELEASE_BODY" \
+              '{tag_name:$tag_name, name:$name, body:$body, prerelease:false}' \
+              > create-release.json
+
             HTTP_CODE="$(
               curl -sS \
                 -X POST \
+                -H "$GITEE_AUTH_HEADER" \
+                -H "Accept: application/json" \
+                -H "Content-Type: application/json" \
                 -o gitee-release.json \
                 -w "%{http_code}" \
-                --form-string "access_token=${GITEE_TOKEN}" \
-                --form-string "tag_name=${TAG}" \
-                --form-string "name=${RELEASE_NAME}" \
-                --form-string "body=${RELEASE_BODY}" \
+                -d @create-release.json \
                 "${GITEE_API}/releases"
             )"
 
@@ -123,9 +134,10 @@ jobs:
             HTTP_CODE="$(
               curl -sS \
                 -X POST \
+                -H "$GITEE_AUTH_HEADER" \
+                -H "Accept: application/json" \
                 -o upload-response.json \
                 -w "%{http_code}" \
-                -F "access_token=${GITEE_TOKEN}" \
                 -F "file=@${file}" \
                 "${GITEE_API}/releases/${GITEE_RELEASE_ID}/attach_files"
             )"
