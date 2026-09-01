@@ -19,14 +19,15 @@ jobs:
 
       - name: Push main and tags to Gitee
         env:
-          GITEE_USERNAME: ${{ secrets.GITEE_USERNAME }}
+          GITEE_OWNER: ${{ vars.GITEE_OWNER }}
+          GITEE_REPO: ${{ vars.GITEE_REPO }}
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
-          GITEE_USERNAME="${GITEE_USERNAME:-nagoyaaaaa}"
-          if [ -z "$GITEE_TOKEN" ]; then
-            echo "GITEE_TOKEN is not configured."
+          if [ -z "$GITEE_OWNER" ] || [ -z "$GITEE_REPO" ] || [ -z "$GITEE_TOKEN" ]; then
+            echo "GITEE_OWNER, GITEE_REPO or GITEE_TOKEN is not configured."
+            echo "Set repository variables GITEE_OWNER/GITEE_REPO and repository secret GITEE_TOKEN."
             exit 1
           fi
-          git remote add gitee "https://${GITEE_USERNAME}:${GITEE_TOKEN}@gitee.com/nagoyaaaaa/checkmiss.git"
+          git remote add gitee "https://${GITEE_OWNER}:${GITEE_TOKEN}@gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
           git push gitee HEAD:main
           git push gitee --tags
